@@ -46,6 +46,6 @@ void printHashMap(HashMap);
 Node popFirst(HashMap);
 
 int main(int argc, char* argv[]) {
-	printf("Hello, %d ---- %d------World! %d\n" , 1, 7, 99);
+	printf("Hello, %d ---- %d------World! %d\n" , NUMAR, 7, 99);
 	return 0;
 }

@@ -2,7 +2,7 @@ typedef struct Node {
 	char* value;
 	char* key;
 	struct Node* next;
-}*Node;
+}*Node, sample_node;
 
 typedef struct List {
  	Node head;

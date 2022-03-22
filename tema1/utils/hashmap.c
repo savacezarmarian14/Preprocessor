@@ -38,9 +38,22 @@ Node popFirst (HashMap h) {
 /* createHashMap( )
  * aloca spatiu pt hashmap
  */
+void freeHashMap(HashMap h) {
+	int i;
+	for(i = 0; i < h->hashmap_size; i++) {
+		Node it = h->hashmap_slots[i]->head;
+		while(it != NULL) {
+			Node aux = it;
+			it = it->next;
+			free(aux);
+		}
+	}
+	free(h->hashmap_slots);
+	free(h);
+}
 
 HashMap createHashMap(int size, HashFunction f) {
-	HashMap h = malloc(sizeof(HashMap));
+	HashMap h = malloc(sizeof(Hash));
 	h->hashmap_size = size;
   h->hashmap_no_values = 0;
 	h->hashmap_slots = malloc(size * sizeof(List));

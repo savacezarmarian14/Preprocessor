@@ -4,7 +4,7 @@
 #include "list.h"
 
 Node newNode(char* value, char* key) {
-	Node node = malloc(sizeof(Node));
+	Node node = malloc(sizeof(sample_node));
 	node->value = strdup(value);
 	node->key = strdup(key);
 	node->next = NULL;

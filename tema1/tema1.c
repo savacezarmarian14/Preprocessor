@@ -50,9 +50,9 @@ void addDefineArgs(HashMap h, int argc, char* argv[]) {
  */
 
 int myGetLine(FILE* target, char* buffer) {
-	char caracter;
+	char caracter = ' ';
 	int i = 0;
-	while((fread(&caracter, sizeof(char), 1, target)) > 0) {
+	while(target != NULL &&fread(&caracter, sizeof(char), 1, target)) {
 		if((int)caracter == ((int)'\n')){
       buffer[i++] = caracter;
       buffer[i] = 0;
@@ -112,13 +112,15 @@ int isInclude(char **words) {
 }
 
 void deleteLine(char ***page, int *size, int line) {
-	for(int i = line; i < *size - 1; i++)
+  int i;
+	for(i = line; i < *size - 1; i++)
 		(*page)[i] = strdup((*page)[i + 1]);
 	*size -= 1;
 }
 
 void setDefineMap(HashMap h, char*** lines, int *no_lines) {
-  for( int i = 0; i < *no_lines; i++) {
+  int i, j;
+  for(i = 0; i < *no_lines; i++) {
     char* line = strdup((*lines[i])); //preiau linia curenta din 'pagina'
 
     if(line[0] == '#') { // verific daca prima litera este '#'
@@ -129,7 +131,7 @@ void setDefineMap(HashMap h, char*** lines, int *no_lines) {
         char *aux_value = no_words == 2 ? strdup("") : strdup(words[2]);
         putInHashMap(h, words[1], aux_value);
     
-        for(int j = i; j < *no_lines - 1; j++)
+        for(j = i; j < *no_lines - 1; j++)
           (*lines)[j] = strdup((*lines)[j + 1]);
     
         *no_lines -= 1;
@@ -172,44 +174,17 @@ char* getFullPath(char* directory, char* file) {
   return dir;
 }
 
-char** getIncludeFile(char* header_name,char **dirs_name, DIR** dirs, int no_dirs,
-    int* len) {
-  //struct dirent* object;
-  char **buffer = NULL;
-  FILE* header_file;
-  for(int i = 0; i < no_dirs; i++) {
-    struct dirent* object;
-    while((object = readdir(dirs[i])) != NULL) {
-      if(strcmp(object->d_name, header_name) == 0) {
-
-        header_file = fopen(getFullPath(dirs_name[i], header_name), "r");
-        rewinddir(dirs[i]);
-        break;
-      }
-    }
-    rewinddir(dirs[i]);
-  }
-  int rc, no_lines = 0;
-  char *line = malloc(MAX_LINE_LEN * sizeof(char));
-  while((rc = myGetLine(header_file, line)) != -1)
-      addLine(line, &buffer, no_lines++);
-  fclose(header_file);
-  (*len) = no_lines;
-  return buffer;
-
-}
-  
 void solveDefine(HashMap h, char*** page, int no_lines) {
   Node target = popFirst(h);
-  
+  int i ,j;
   if (target != NULL) 
-    for (int i = 0; i < no_lines; i++) {
+    for (i = 0; i < no_lines; i++) {
     char* line = strdup((*page)[i]); // copiez linia curenta in "line"
     int no_words = 0; //numarul de cuvinte din linie
   
     char** words = parseLine(line, "\"", &no_words); // lista de cuvinte
     char* buffer = calloc(MAX_LINE_LEN, sizeof(char));
-    for (int j = 0; j < no_words; j++) {
+    for (j = 0; j < no_words; j++) {
       
       if(words[j] != NULL && j % 2 == 0){ // mereu define urile valide sunt pe numar par intre doua ' " '
         char* result = swapkey(strdup(words[j]), target);
@@ -231,10 +206,7 @@ void solveDefine(HashMap h, char*** page, int no_lines) {
   }
 }
 
-void rewindAllDir(DIR** dirs, int no_dirs) {
-  for(int i = 0; i < no_dirs; i++)
-    rewinddir(dirs[i]);
-}
+
 char* getIncludeName(char **args) {
   if(args[1][0] == '\"') {
     char *aux = strdup(args[1]);
@@ -246,10 +218,11 @@ char* getIncludeName(char **args) {
 }
 
 char* inputFile(int argc, char** argv) {
+  int i;
   if(argv[1][0] != '-')
     return strdup(argv[1]);
   else {
-    for(int i = 2; i < argc; i++) {
+    for(i = 2; i < argc; i++) {
       if(argv[i][0] == '-' && strlen(argv[i]) == 2)
         i += 2;
       if(argv[i][0] != '-')
@@ -264,7 +237,8 @@ char* path(char* name, char* d_name){
   return aux;
 }
 FILE* getIncludePath(char* name, char** d_name, int d_no) {
-  for(int i = 0; i < d_no; i++) {
+  int i;
+  for(i = 0; i < d_no; i++) {
     char* fullPath = path(name, d_name[i]);
     FILE *file = fopen(fullPath, "r");
     if(file != NULL)
@@ -273,8 +247,6 @@ FILE* getIncludePath(char* name, char** d_name, int d_no) {
   }
   return NULL;
 }
-
-
 
 char** readFile(FILE* file, int* no_lines){
   (*no_lines) = 0;
@@ -286,10 +258,12 @@ char** readFile(FILE* file, int* no_lines){
   }
   return STRING_FILE;
 }
+
 char** solveInclude(char** main_file, int lines, char** d_name, int d_no, int *count) {
+  int i, j;
   char** new_buffer = NULL;
   int new_buffer_lines = 0;
-  for(int i = 0; i < lines; i++) {
+  for(i = 0; i < lines; i++) {
     char* line = strdup(main_file[i]);
     int no_words;
     char** words = parseLine(line, "# \"", &no_words);
@@ -298,7 +272,7 @@ char** solveInclude(char** main_file, int lines, char** d_name, int d_no, int *c
       int libsize;
       char** STRING_LIB_FILE = readFile(libfile, &libsize); 
       fclose(libfile);
-      for(int j = 0; j < libsize; j++) {
+      for(j = 0; j < libsize; j++) {
         if(STRING_LIB_FILE[j][0] != '\0')
           addLine(strdup(STRING_LIB_FILE[j]), &new_buffer, new_buffer_lines++);
       }
@@ -327,6 +301,7 @@ char* outputFile(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
+  int i,j;
   char* input_file = inputFile(argc, argv);
 	FILE* target_file = fopen(input_file,"r");
   char* output_file = outputFile(argc, argv);
@@ -350,7 +325,8 @@ int main(int argc, char* argv[]) {
 	while( (rc = myGetLine(target_file, buffer)) != -1) {
       addLine(buffer, &file_container, lines++);  // adaug linia in vectorul de linii
   }
-  fclose(target_file);
+  if(target_file != NULL)
+    fclose(target_file);
   int lastlines = 0;
   while(lines != lastlines) {
     lastlines = lines;
@@ -366,7 +342,7 @@ int main(int argc, char* argv[]) {
 	//Am creat in utils doua headere hashmap.h si list.h simple//
 	HashMap defineMap = createHashMap(25, &BASIC_HASH_FUNCTION);
   
-	for(int i = 0; i < lines; i++) {
+	for(i = 0; i < lines; i++) {
 		char *current_line  = strdup(file_container[i]); // folosesc o linie auxiliara ca sa nu stric nimic
 		if(current_line[0] == '#') {
 			int no = 0;
@@ -380,8 +356,11 @@ int main(int argc, char* argv[]) {
 				putInHashMap(defineMap, words[1], value); // adaug define in hashmap
 				deleteLine(&file_container, &lines, i); // sterg linia #define KEY VALUE
 				i--; // raman pe loc cu cautarea
+        free(value);
 			}	
+      free(words);
 		}
+    free(current_line);
 	} 
   
   addDefineArgs(defineMap, argc, argv); // adaug define urile date ca argumente in linia de comanda
@@ -392,14 +371,21 @@ int main(int argc, char* argv[]) {
     solveDefine(defineMap, &(file_container), lines);
 
   if(output_file == NULL)
-    for(int i = 0; i < lines; i++)
+    for(i = 0; i < lines; i++)
       printf("%s\n", file_container[i]);
   else {
     FILE* outputf =  fopen(output_file, "w");
-    for (int i = 0; i < lines; i++) {
+    for (i = 0; i < lines; i++) {
       fwrite(file_container[i], strlen(file_container[i]) * sizeof(char), 1, outputf);
     }
+    fclose(outputf);
   }
+
+  freeHashMap(defineMap);
+  for(i = 0; i < lines; i++)
+    free(file_container[i]);
+  free(file_container);
+  free(directories);
 
 
 
