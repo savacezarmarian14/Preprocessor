@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "hashmap.h"
 
 long checksum(char* word) {
@@ -49,7 +50,8 @@ HashMap createHashMap(int size, HashFunction f) {
 	h->hash_function = f;
 }
 
-/*  exists( )
+/*  
+ * exists( )
  *  verifica daca  keya/valoarea exista in functie 
  *  type  - 'v' 'k'
  */
@@ -119,25 +121,10 @@ char* valueOfKey(HashMap h, char* key) {
 			break;
 		it = it->next;
 	}
-	//if(it!=NULL)
-	//	printf("%s\n", it->value);
+
 	if(it == NULL)
 		return NULL;
 	else 
 		return it->value;
 }
  
-
-
-
-/*
-int main() {
-	
-	HashMap h = createHashMap(16, &BASIC_HASH_FUNCTION);
-	putInHashMap(h, "ce", "faci");
-	putInHashMap(h, "ce", "zici");
-	putInHashMap(h, "salut", "bn");
-	printHashMap(h);
-	return 0;
-}
-*/

@@ -13,7 +13,7 @@ build:list.o hashmap.o command.o tema.o
 .SILENT:
 run: 
 	make clean
-	./main -DNUMAR=1 -Iutils example.c 
+	./main -DNUMAR=1 -Iutils example.c -Ooutput.txt
 	echo "----------------------------------------------------"
 clean:
 	rm -f *.o

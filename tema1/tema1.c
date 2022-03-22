@@ -54,12 +54,14 @@ int myGetLine(FILE* target, char* buffer) {
 	char caracter;
 	int i = 0;
 	while((fread(&caracter, sizeof(char), 1, target)) > 0) {
-		if((int)caracter == ((int)'\n'))
-			caracter = 0;
-		buffer[i++] = caracter;
-		if(caracter == 0)
-			return i - 1;
+		if((int)caracter == ((int)'\n')){
+      buffer[i++] = caracter;
+      buffer[i] = 0;
+      return i;
+    }
+    buffer[i++] = caracter;
 	}
+
 	return -1;
 }
 
@@ -174,19 +176,7 @@ void printFiles(DIR* directory) {
   rewinddir(directory);
 }
 
-FILE* getFile(char* file_name, char* dir_name, DIR* directory) {
-  struct dirent* iterator;
-  while((iterator = readdir(directory)) != NULL) {
-    if(strcmp(file_name, iterator->d_name) == 0) {
-      char* file_path = strdup(dir_name);
-      strcat(file_path, "/");
-      strcat(file_path, file_name);
-      FILE* fd = fopen(file_path, "r");
-      return fd; 
-    }
-  }
-  return -1;
-}
+
 char* getFullPath(char* directory, char* file) {
   char *dir = strdup(directory);
   strcat(dir, "/");
@@ -221,18 +211,15 @@ char** getIncludeFile(char* header_name,char **dirs_name, DIR** dirs, int no_dir
 
 }
   
-
 void solveDefine(HashMap h, char*** page, int no_lines) {
   Node target = popFirst(h);
   
- 
- //iterez prin (*page) pentru a separa cuvintele intre " "
-  if(target != NULL) 
-    for(int i = 0; i < no_lines; i++) {
+  if (target != NULL) 
+    for (int i = 0; i < no_lines; i++) {
     char* line = strdup((*page)[i]); // copiez linia curenta in "line"
     int no_words = 0; //numarul de cuvinte din linie
   
-    char ** words = parseLine(line, "\"", &no_words); // lista de cuvinte
+    char** words = parseLine(line, "\"", &no_words); // lista de cuvinte
     char* buffer = calloc(MAX_LINE_LEN, sizeof(char));
     for (int j = 0; j < no_words; j++) {
       
@@ -275,7 +262,7 @@ char* inputFile(int argc, char** argv) {
     return strdup(argv[1]);
   else {
     for(int i = 2; i < argc; i++) {
-      if(argv[i][0] == '-' && strlen(argv) == 2)
+      if(argv[i][0] == '-' && strlen(argv[i]) == 2)
         i += 2;
       if(argv[i][0] != '-')
         return strdup(argv[i]);
@@ -298,6 +285,9 @@ FILE* getIncludePath(char* name, char** d_name, int d_no) {
   }
   return NULL;
 }
+
+
+
 char** readFile(FILE* file, int* no_lines){
   (*no_lines) = 0;
   char** STRING_FILE = NULL;
@@ -332,9 +322,28 @@ char** solveInclude(char** main_file, int lines, char** d_name, int d_no, int *c
   return new_buffer;
 } 
 
+char* outputFile(int argc, char* argv[]) {
+    int i;
+    for (i = 0; i < argc; i++) {
+      char *arg = strdup(argv[i]);
+      if(strstr(arg, "-O") != NULL) {
+        if(strlen(arg) == 2)
+          return strdup(argv[i + 1]);
+        else {
+          strcpy(arg, arg + 2);
+          return arg;
+        }
+      }
+    }
+    return NULL;
+}
+
 int main(int argc, char* argv[]) {
   char* input_file = inputFile(argc, argv);
 	FILE* target_file = fopen(input_file,"r");
+  char* output_file = outputFile(argc, argv);
+  if(output_file != NULL)
+    printf("output file : %s\n ", output_file);
 
 	int rc = 0;
 	int lines = 0;
@@ -359,6 +368,8 @@ int main(int argc, char* argv[]) {
     lastlines = lines;
     file_container = solveInclude(file_container, lines, directories, no_directories, &lines);
   }
+
+  
 
   /*---------------------------------------------------------------------------------------*/
 
@@ -392,8 +403,16 @@ int main(int argc, char* argv[]) {
   while(defineMap->hashmap_no_values > 0)
     solveDefine(defineMap, &(file_container), lines);
 
-  for(int i = 0; i < lines; i++)
-   printf("%s\n", file_container[i]);
+  if(output_file == NULL)
+    for(int i = 0; i < lines; i++)
+      printf("%s\n", file_container[i]);
+  else {
+    FILE* outputf =  fopen(output_file, "w");
+    for (int i = 0; i < lines; i++) {
+      fwrite(file_container[i], strlen(file_container[i]) * sizeof(char), 1, outputf);
+    }
+  }
+
 
 
   return 0;
