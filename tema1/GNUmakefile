@@ -12,7 +12,8 @@ build:list.o hashmap.o command.o tema.o
 	$(CC) $(CFLAGS) tema.o list.o hashmap.o command.o -o main
 .SILENT:
 run: 
-	./main -DNUMAR=1 -Iutils -I dirtest
+	make clean
+	./main -DNUMAR=1 -Iutils example.c 
 	echo "----------------------------------------------------"
 clean:
 	rm -f *.o

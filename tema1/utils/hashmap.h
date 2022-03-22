@@ -1,4 +1,5 @@
 #include "list.h"
+#include <sys/types.h>
 
 typedef long(*HashFunction)(char*, int);
 
@@ -8,7 +9,6 @@ typedef struct {
 	List *hashmap_slots;
 	HashFunction hash_function;
 }*HashMap;
-
 
 long BASIC_HASH_FUNCTION(char*, int);
 
@@ -21,5 +21,4 @@ char* valueOfKey(HashMap, char*);
 int exists(HashMap, char*, char);
 
 void printHashMap(HashMap);	
-
 Node popFirst(HashMap);

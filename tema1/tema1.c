@@ -104,6 +104,12 @@ int isDefine(char **words) {
 	return 0;
 }
 
+int isInclude(char **words) {
+	if(strcmp(words[0], "include")  == 0)
+		return 1;
+	return 0;
+}
+
 void deleteLine(char ***page, int *size, int line) {
 	for(int i = line; i < *size - 1; i++)
 		(*page)[i] = strdup((*page)[i + 1]);
@@ -209,6 +215,7 @@ char** getIncludeFile(char* header_name,char **dirs_name, DIR** dirs, int no_dir
   char *line = malloc(MAX_LINE_LEN * sizeof(char));
   while((rc = myGetLine(header_file, line)) != -1)
       addLine(line, &buffer, no_lines++);
+  fclose(header_file);
   (*len) = no_lines;
   return buffer;
 
@@ -253,9 +260,81 @@ void rewindAllDir(DIR** dirs, int no_dirs) {
   for(int i = 0; i < no_dirs; i++)
     rewinddir(dirs[i]);
 }
+char* getIncludeName(char **args) {
+  if(args[1][0] == '\"') {
+    char *aux = strdup(args[1]);
+    strcpy(aux, aux + 1);
+    aux[strlen(aux) - 1] = 0;
+    return aux;
+  }
+  return NULL;
+}
+
+char* inputFile(int argc, char** argv) {
+  if(argv[1][0] != '-')
+    return strdup(argv[1]);
+  else {
+    for(int i = 2; i < argc; i++) {
+      if(argv[i][0] == '-' && strlen(argv) == 2)
+        i += 2;
+      if(argv[i][0] != '-')
+        return strdup(argv[i]);
+    } 
+  }
+}
+char* path(char* name, char* d_name){
+  char *aux = strdup(d_name);
+  strcat(aux, "/");
+  strcat(aux, strdup(name));
+  return aux;
+}
+FILE* getIncludePath(char* name, char** d_name, int d_no) {
+  for(int i = 0; i < d_no; i++) {
+    char* fullPath = path(name, d_name[i]);
+    FILE *file = fopen(fullPath, "r");
+    if(file != NULL)
+      return file;
+    fclose(file);
+  }
+  return NULL;
+}
+char** readFile(FILE* file, int* no_lines){
+  (*no_lines) = 0;
+  char** STRING_FILE = NULL;
+  char *buffer = (char*) malloc(MAX_LINE_LEN * sizeof(char));
+  int rc ;
+  while((rc = myGetLine(file, buffer)) != -1) {
+    addLine(buffer, &STRING_FILE, (*no_lines)++);
+  }
+  return STRING_FILE;
+}
+char** solveInclude(char** main_file, int lines, char** d_name, int d_no, int *count) {
+  char** new_buffer = NULL;
+  int new_buffer_lines = 0;
+  for(int i = 0; i < lines; i++) {
+    char* line = strdup(main_file[i]);
+    int no_words;
+    char** words = parseLine(line, "# \"", &no_words);
+    if(isInclude(words) && words[1][0] != '<') {
+      FILE* libfile = getIncludePath(words[1], d_name, d_no);
+      int libsize;
+      char** STRING_LIB_FILE = readFile(libfile, &libsize); 
+      fclose(libfile);
+      for(int j = 0; j < libsize; j++) {
+        if(STRING_LIB_FILE[j][0] != '\0')
+          addLine(strdup(STRING_LIB_FILE[j]), &new_buffer, new_buffer_lines++);
+      }
+    } else if(main_file[i][0] != '\0') {
+      addLine(strdup(main_file[i]), &new_buffer, new_buffer_lines++ );
+    } 
+  }
+  *count = new_buffer_lines;
+  return new_buffer;
+} 
 
 int main(int argc, char* argv[]) {
-	FILE* target_file = fopen("example.c", "rw");
+  char* input_file = inputFile(argc, argv);
+	FILE* target_file = fopen(input_file,"r");
 
 	int rc = 0;
 	int lines = 0;
@@ -269,21 +348,16 @@ int main(int argc, char* argv[]) {
   
   /*-------------Deschiderea directoarelor---------------*/
 
-  DIR** dirChannel = openAllDirectories(directories, no_directories);
-  int nn = 0;
-  char** incl = getIncludeFile("hashmap.h", directories, dirChannel, no_directories, &nn);
-  for(int i = 0; i < nn; i++)
-    printf("----------------------%s\n", incl[i]);
-  rewindAllDir(dirChannel, no_directories);
-  incl = getIncludeFile("list.h", directories, dirChannel, no_directories, &nn);
-  for(int i = 0; i < nn; i++)
-    printf("----------------------%s\n", incl[i]);
-  ///TODO TODO TODO 
-  /*------------Citirea fievarei linii din fisierul de parsat------------------------------*/
 
   char** file_container = NULL;
 	while( (rc = myGetLine(target_file, buffer)) != -1) {
-		addLine(buffer, &file_container, lines++);  // adaug linia in vectorul de linii
+      addLine(buffer, &file_container, lines++);  // adaug linia in vectorul de linii
+  }
+  fclose(target_file);
+  int lastlines = 0;
+  while(lines != lastlines) {
+    lastlines = lines;
+    file_container = solveInclude(file_container, lines, directories, no_directories, &lines);
   }
 
   /*---------------------------------------------------------------------------------------*/
