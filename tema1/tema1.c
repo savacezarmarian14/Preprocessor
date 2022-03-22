@@ -12,7 +12,8 @@ char** parseLine(char*, const char*, int*);
 
 
 void addDefineArgs(HashMap h, int argc, char* argv[]) {
-  for(int i = 0; i < argc; i++) {
+  int i;
+  for(i = 0; i < argc; i++) {
     if(strlen(argv[i]) == 2)  {//-D [key][=value]
       if(strcmp(argv[i], "-D") == 0) {
         char *aux = strdup(argv[++i]);
@@ -30,10 +31,8 @@ void addDefineArgs(HashMap h, int argc, char* argv[]) {
       if(strcmp(prefix, "-D") == 0) {
         char* aux = strdup(argv[i]);
         aux = aux + 2; // mut pointerul cu 2 unitati pentru a separa -D de resul argumentului
-        
         int n; // nu o sa l folosesc vreodata 
         char **key_value = parseLine(aux, "=", &n);
-
         putInHashMap(h, key_value[0], key_value[1]); // introduc in hashmap key - value
       }
     }
@@ -161,20 +160,9 @@ char* swapkey(char* initial_word, Node node) {
 }
 
 
-DIR** openAllDirectories(char **directories_name, int no_directories) {
-  DIR** directories = (DIR**) malloc(no_directories * sizeof(int));
-  for(int i = 0; i < no_directories; i++) 
-    directories[i] = opendir(directories_name[i]);
-  return directories;
-}
+
 
  /* \/---Am facut aceasta functie doar pt a testa rewinddir() */
-void printFiles(DIR* directory) {
-  struct dirent* iterator;
-  while((iterator = readdir(directory)) != NULL)
-    printf("%s\n", iterator->d_name);
-  rewinddir(directory);
-}
 
 
 char* getFullPath(char* directory, char* file) {
@@ -382,7 +370,7 @@ int main(int argc, char* argv[]) {
 		char *current_line  = strdup(file_container[i]); // folosesc o linie auxiliara ca sa nu stric nimic
 		if(current_line[0] == '#') {
 			int no = 0;
-			char **words = parseLine(current_line, "# ", &no); // am separat linia de in functie de '#' si ' ' 
+			char **words = parseLine(current_line, "# \n", &no); // am separat linia de in functie de '#' si ' ' 
 			if(isDefine(words)) {
 				char* value;
 				if(no == 2)

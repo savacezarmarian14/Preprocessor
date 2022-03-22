@@ -9,11 +9,11 @@ command.o:
 tema.o:
 	gcc -c tema1.c -o tema.o
 build:list.o hashmap.o command.o tema.o
-	$(CC) $(CFLAGS) tema.o list.o hashmap.o command.o -o main
+	$(CC) $(CFLAGS) tema.o list.o hashmap.o command.o -o so-cpp
 .SILENT:
 run: 
 	make clean
-	./main -DNUMAR=1 -Iutils example.c -Ooutput.txt
+	./so-cpp -DNUMAR=1 -Iutils example.c -Ooutput.txt
 	echo "----------------------------------------------------"
 clean:
 	rm -f *.o

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "list.h"
+#include "hashmap.h"
 
 int main(int argc, char* argv[]) {
 	printf("Hello, %d ---- %d------World! %d\n" , NUMAR, CEZ, RADU);
