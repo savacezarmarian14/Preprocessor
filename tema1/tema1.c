@@ -315,7 +315,9 @@ int main(int argc, char* argv[]) {
   /*-------------Crearea unei liste de directoare -------*/
 
   char** directories = listOfDirectories(argc, argv, &no_directories);
-
+  directories = realloc(directories, (no_directories + 1) * sizeof(char*));
+  no_directories++;
+  directories[no_directories - 1] = strdup(".");
   /*-----------------------------------------------------*/
   
   /*-------------Deschiderea directoarelor---------------*/
